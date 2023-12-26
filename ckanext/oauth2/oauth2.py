@@ -109,11 +109,11 @@ class OAuth2Helper(object):
         if self.legacy_idm:
             # This is only required for Keyrock v6 and v5
             headers['Authorization'] = 'Basic %s' % base64.urlsafe_b64encode(
-                (f'{self.client_id}:{self.client_secret}').encode()
+                ('{0}:{1}'.format(self.client_id, self.client_secret)).encode()
             )
 
         try:
-            log.debug(f'authorization_response: {toolkit.request.url}')
+            log.debug('authorization_response: {0}'.format(toolkit.request.url))
             token = oauth.fetch_token(self.token_endpoint,
                                       client_id=self.client_id,
                                       client_secret=self.client_secret,
@@ -137,11 +137,11 @@ class OAuth2Helper(object):
             try:
                 if self.legacy_idm:
                     profile_response = requests.get(self.profile_api_url + '?access_token=%s' % token['access_token'], verify=self.verify_https)
-                    log.debug(f'profile response: {profile_response}')
+                    log.debug('profile response: {0}'.format(profile_response))
                 else:
                     oauth = OAuth2Session(self.client_id, token=token)
                     profile_response = oauth.get(self.profile_api_url)
-                    log.debug(f'profile response_: {profile_response}')
+                    log.debug('profile response_: {0}'.format(profile_response))
 
             except requests.exceptions.SSLError as e:
                 log.debug('exception identify oauth2')
@@ -161,7 +161,7 @@ class OAuth2Helper(object):
             else:
                 user_data = profile_response.json()
                 user = self.user_json(user_data)
-                log.debug(f'user: {user}')
+                log.debug('user: {0}'.format(user))
 
         # Save the user in the database
         model.Session.add(user)
@@ -172,7 +172,7 @@ class OAuth2Helper(object):
 
     def user_json(self, user_data):
         user_data = user_data['user']  # Fix for Feide /userinfo
-        log.debug(f'user_data: {user_data}')
+        log.debug('user_data: {0}'.format(user_data))
         email = user_data[self.profile_api_mail_field]
         user_name = user_data[self.profile_api_user_field]
 

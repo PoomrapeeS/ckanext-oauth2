@@ -29,7 +29,11 @@ from ckan import plugins
 from ckan.common import g
 from ckan.plugins import toolkit
 import ckanext.oauth2.db as db
-import urllib.parse
+# If python 3 import urllib.parse, else import urlparse
+try:
+    import urllib.parse
+except ImportError:
+    from urlparse import urlparse
 from ckanext.oauth2.views import get_blueprints
 from ckanext.oauth2.cli import get_commands
 
@@ -92,7 +96,7 @@ class OAuth2Plugin(_OAuth2Plugin, plugins.SingletonPlugin):
         log.debug('Init OAuth2 extension')
 
         db.init_db(model)
-        log.debug(f'Creating UserToken...')
+        log.debug('Creating UserToken...')
         self.oauth2helper = OAuth2Helper()
 
 
@@ -120,9 +124,9 @@ class OAuth2Plugin(_OAuth2Plugin, plugins.SingletonPlugin):
             try:
                 token = {'access_token': apikey}
                 user_name = self.oauth2helper.identify(token)
-                log.debug(f'user_name1: {user_name}')
+                log.debug('user_name1: {user_name}'.format(user_name=user_name))
             except Exception as e:
-                log.debug(f'Auth error:')
+                log.debug('Auth error:')
                 log.debug(e)
                 pass
 

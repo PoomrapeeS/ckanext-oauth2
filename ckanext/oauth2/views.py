@@ -7,8 +7,12 @@ from ckanext.oauth2 import constants
 from ckan.common import session
 import ckan.lib.helpers as helpers
 import ckan.plugins.toolkit as toolkit
-import urllib.parse
-from ckanext.oauth2.oauth2 import OAuth2Helper
+# If python 3 import urllib.parse, else import urlparse
+try:
+    import urllib.parse
+except ImportError:
+    from urlparse import urlparse
+from ckanext.oauth2.oauth2 import OAuth2Helper, get_came_from
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +28,11 @@ def _get_previous_page(default_page):
     else:
         came_from_url = toolkit.request.params.get('came_from', default_page)
 
-    came_from_url_parsed = urllib.parse.urlparse(came_from_url)
+    # for python 3
+    try:
+        came_from_url_parsed = urllib.parse.urlparse(came_from_url)
+    except NameError:
+        came_from_url_parsed = urlparse(came_from_url)
 
     # Avoid redirecting users to external hosts
     if came_from_url_parsed.netloc != '' and came_from_url_parsed.netloc != toolkit.request.host:
@@ -59,7 +67,7 @@ def callback():
 
         user_name = oauth2helper.identify(token)
         response = oauth2helper.remember(user_name)
-        log.debug(f'usr:{user_name}')
+        log.debug('usr:{user_name}'.format(user_name=user_name))
 
         oauth2helper.update_token(user_name, token)
         response = oauth2helper.redirect_from_callback(response)
@@ -68,7 +76,7 @@ def callback():
         session.save()
 
         # If the callback is called with an error, we must show the message
-        error_description = toolkit.request.GET.get('error_description')
+        error_description = toolkit.request.params.get('error_description', None)
         if not error_description:
             if e.message:
                 error_description = e.message
@@ -80,7 +88,7 @@ def callback():
                 error_description = type(e).__name__
         response = jsonify()
         response.status_code = 302
-        redirect_url = oauth2.get_came_from(toolkit.request.params.get('state'))
+        redirect_url = get_came_from(toolkit.request.params.get('state'))
         redirect_url = '/' if redirect_url == constants.INITIAL_PAGE else redirect_url
         response.location = redirect_url
         helpers.flash_error(error_description)
